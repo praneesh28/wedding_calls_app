@@ -39,12 +39,43 @@ jobs:
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
+      - name: Build .app bundle with xcodebuild
+        run: |
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Runner.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+      - name: Extract .app from archive
+        run: |
+          cd ios
+          xcodebuild -exportArchive \
+            -archivePath build/Runner.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ExportOptions.plist \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            2>/dev/null || true
+          # Try to find the .app in the archive
+          if [ -d "build/Runner.xcarchive/Products/Applications/Runner.app" ]; then
+            cp -R build/Runner.xcarchive/Products/Applications/Runner.app build/
+            echo "Found .app in archive"
+          fi
+
       - name: List build output
         run: |
           echo "Checking build output..."
-          find build -name "*.app" -type d 2>/dev/null || echo "No .app files found"
-          ls -la build/ios/ 2>/dev/null || echo "build/ios/ directory not found"
-          ls -la build/ios/iphoneos/ 2>/dev/null || echo "build/ios/iphoneos/ directory not found"
+          find . -name "*.app" -type d 2>/dev/null | head -10 || echo "No .app files found"
+          ls -la ios/build/ 2>/dev/null || echo "ios/build/ directory not found"
 
       - name: Upload iOS build artifacts
         uses: actions/upload-artifact@v4
@@ -52,8 +83,9 @@ jobs:
         with:
           name: ios-build
           path: |
-            build/ios/**/*.app
-            build/ios/iphoneos/
+            ios/build/Runner.app
+            ios/build/Runner.xcarchive
+            ios/build/ipa
           retention-days: 30
           if-no-files-found: warn
 
