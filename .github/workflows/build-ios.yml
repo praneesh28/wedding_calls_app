@@ -39,15 +39,23 @@ jobs:
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
+      - name: List build output
+        run: |
+          echo "Checking build output..."
+          find build -name "*.app" -type d 2>/dev/null || echo "No .app files found"
+          ls -la build/ios/ 2>/dev/null || echo "build/ios/ directory not found"
+          ls -la build/ios/iphoneos/ 2>/dev/null || echo "build/ios/iphoneos/ directory not found"
+
       - name: Upload iOS build artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ios-build
           path: |
-            build/ios/iphoneos/Runner.app
-            build/ios/iphoneos/*.app
+            build/ios/**/*.app
+            build/ios/iphoneos/
           retention-days: 30
+          if-no-files-found: warn
 
       # Note: IPA building requires code signing setup via GitHub Secrets
       # To enable, add these secrets in repository settings:
