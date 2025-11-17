@@ -21,16 +21,29 @@ jobs:
         flutter-version: '3.35.6'
         channel: 'stable'
         
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
     - name: Get Flutter dependencies
       run: flutter pub get
       
+    - name: Install CocoaPods
+      run: |
+        sudo gem install cocoapods
+        pod --version
+        
     - name: Install CocoaPods dependencies
       run: |
         cd ios
-        pod install
+        pod deintegrate || true
+        pod cache clean --all || true
+        pod install --repo-update
         cd ..
         
-    - name: Setup code signing
+    - name: Setup code signing (if certificates provided)
+      if: ${{ secrets.CERTIFICATE_BASE64 != '' && secrets.PROVISIONING_PROFILE_BASE64 != '' }}
       env:
         BUILD_CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
         P12_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
@@ -60,11 +73,14 @@ jobs:
         cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
         
     - name: Build IPA
-      run: flutter build ipa --release
+      run: |
+        flutter clean
+        flutter build ipa --release
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      continue-on-error: false
         
     - name: Upload IPA artifact
       uses: actions/upload-artifact@v4
