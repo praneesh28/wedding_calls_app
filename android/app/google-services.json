@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "863761100815",
+    "project_id": "my-wedding-calls-123",
+    "storage_bucket": "my-wedding-calls-123.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863761100815:android:90125b50fd21f00ed0f37a",
+        "android_client_info": {
+          "package_name": "com.example.wedding_calls_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFRhpjGFJJlaZa88Ju-oswYyJCVvXa-cA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
