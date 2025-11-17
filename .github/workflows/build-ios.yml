@@ -72,15 +72,43 @@ jobs:
         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
         cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
         
-    - name: Build IPA
+    - name: Make build script executable
+      run: chmod +x ios/build_ipa.sh || true
+      
+    - name: Build IPA using custom script
       run: |
-        flutter clean
-        flutter build ipa --release
+        cd ios
+        ./build_ipa.sh || bash build_ipa.sh
+        cd ..
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       continue-on-error: false
+      
+    - name: Copy IPA to Flutter build directory
+      run: |
+        mkdir -p build/ios/ipa
+        cp ios/build/ipa/*.ipa build/ios/ipa/ || true
+      
+    - name: Verify IPA was created
+      run: |
+        echo "Checking for IPA file..."
+        if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
+          echo "✓ IPA file found in build/ios/ipa/:"
+          ls -lh build/ios/ipa/*.ipa
+        elif ls ios/build/ipa/*.ipa 1> /dev/null 2>&1; then
+          echo "✓ IPA file found in ios/build/ipa/:"
+          ls -lh ios/build/ipa/*.ipa
+          echo "Copying to build/ios/ipa/..."
+          mkdir -p build/ios/ipa
+          cp ios/build/ipa/*.ipa build/ios/ipa/
+        else
+          echo "✗ IPA file not found"
+          echo "Listing directories:"
+          find . -name "*.ipa" -o -name "*.xcarchive" | head -20
+          exit 1
+        fi
         
     - name: Upload IPA artifact
       uses: actions/upload-artifact@v4
@@ -88,3 +116,4 @@ jobs:
         name: ios-ipa
         path: build/ios/ipa/*.ipa
         retention-days: 30
+        if-no-files-found: error
